@@ -22,10 +22,10 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-r2dbc</artifactId>
     </dependency>
-    <!--		<dependency>-->
-    <!--			<groupId>org.springframework.boot</groupId>-->
-    <!--			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>-->
-    <!--		</dependency>-->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webflux</artifactId>
@@ -121,6 +121,25 @@
       <version>0.2.6</version>
     </dependency>
 
+    <!-- security dependencies -->
+<!--    <dependency>-->
+<!--      <groupId>org.springframework.boot</groupId>-->
+<!--      <artifactId>spring-boot-starter-security</artifactId>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>org.springframework.boot</groupId>-->
+<!--      <artifactId>spring-boot-starter-validation</artifactId>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>io.jsonwebtoken</groupId>-->
+<!--      <artifactId>jjwt</artifactId>-->
+<!--      <version>0.11.5</version>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>org.springframework.security</groupId>-->
+<!--      <artifactId>spring-security-oauth2-jose</artifactId>-->
+<!--      <version>5.8.0</version>-->
+<!--    </dependency>-->
   </dependencies>
 
   <build>
@@ -178,50 +197,50 @@
 
         </configuration>
       </plugin>
-<!--      <plugin>-->
-<!--        <groupId>org.openapitools</groupId>-->
-<!--        <artifactId>openapi-generator-maven-plugin</artifactId>-->
-<!--        <version>6.6.0</version> &lt;!&ndash; Use the latest version &ndash;&gt;-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <id>generate-spring-code</id>-->
-<!--            <goals>-->
-<!--              <goal>generate</goal>-->
-<!--            </goals>-->
-<!--            <configuration>-->
-<!--              <inputSpec>${project.basedir}/src/main/resources/api-spec.yaml</inputSpec>-->
-<!--              <generatorName>spring</generatorName>-->
-<!--              <output>${project.build.directory}/generated-sources/openapi</output>-->
-<!--              <packageName>com.reftech.backend.anaservice.api</packageName>-->
-<!--              <apiPackage>com.reftech.backend.anaservice.api</apiPackage>-->
-<!--              <modelPackage>com.reftech.backend.anaservice.api</modelPackage>-->
-<!--              <generatorName>spring</generatorName>-->
-<!--              <generateApiTests>false</generateApiTests>-->
-<!--              <generateModelTests>false</generateModelTests>-->
-<!--              <addTestCompileSourceRoot>false</addTestCompileSourceRoot>-->
-<!--              <configOptions>-->
-<!--                <openApiNullable>false</openApiNullable>-->
-<!--                <delegatePattern>true</delegatePattern> &lt;!&ndash; Delegate pattern &ndash;&gt;-->
-<!--                <reactive>true</reactive> &lt;!&ndash; Ensure this is set to true &ndash;&gt;-->
-<!--                <interfaceOnly>false</interfaceOnly> &lt;!&ndash; Generate only interfaces &ndash;&gt;-->
-<!--                <useTags>true</useTags>          &lt;!&ndash; Use tags for API grouping &ndash;&gt;-->
-<!--                <useJakartaEe>true</useJakartaEe>-->
-<!--              </configOptions>-->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>6.6.0</version> <!-- Use the latest version -->
+        <executions>
+          <execution>
+            <id>generate-spring-code</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/api-spec.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <output>${project.build.directory}/generated-sources/openapi</output>
+              <packageName>com.reftech.backend.anaservice.api</packageName>
+              <apiPackage>com.reftech.backend.anaservice.api</apiPackage>
+              <modelPackage>com.reftech.backend.anaservice.api</modelPackage>
+              <generatorName>spring</generatorName>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <addTestCompileSourceRoot>false</addTestCompileSourceRoot>
+              <configOptions>
+                <openApiNullable>false</openApiNullable>
+                <delegatePattern>true</delegatePattern> <!-- Delegate pattern -->
+                <reactive>true</reactive> <!-- Ensure this is set to true -->
+                <interfaceOnly>false</interfaceOnly> <!-- Generate only interfaces -->
+                <useTags>true</useTags>          <!-- Use tags for API grouping -->
+                <useJakartaEe>true</useJakartaEe>
+              </configOptions>
 
-<!--              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged> &lt;!&ndash; Skip if spec-->
-<!--							hasn't changed &ndash;&gt;-->
-<!--              <additionalProperties>-->
-<!--                <java8>true</java8> &lt;!&ndash; Ensure Java 8 or higher compatibility &ndash;&gt;-->
-<!--                <jakarta-validation>true</jakarta-validation>-->
-<!--                <reactive>true</reactive> &lt;!&ndash; Ensure this is set to true &ndash;&gt;-->
+              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged> <!-- Skip if spec
+							hasn't changed -->
+              <additionalProperties>
+                <java8>true</java8> <!-- Ensure Java 8 or higher compatibility -->
+                <jakarta-validation>true</jakarta-validation>
+                <reactive>true</reactive> <!-- Ensure this is set to true -->
 
-<!--                <jakarta>true</jakarta>  &lt;!&ndash; Convert to Jakarta (Spring Boot 3.x and-->
-<!--								above) &ndash;&gt;-->
-<!--              </additionalProperties>-->
-<!--            </configuration>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+                <jakarta>true</jakarta>  <!-- Convert to Jakarta (Spring Boot 3.x and
+								above) -->
+              </additionalProperties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

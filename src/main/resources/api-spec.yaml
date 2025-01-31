@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: Authentication & User Management API
+  description: API for managing user authentication, registration, and session handling.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: auth
+    description: Operations related to user authentication and session management
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: User login
+      description: Logs in a user by validating credentials and returning an authentication token.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The username of the user.
+                password:
+                  type: string
+                  description: The user's password.
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Successful login, token returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    description: The access token for the authenticated user.
+                  refreshToken:
+                    type: string
+                    description: The refresh token for token renewal.
+        '401':
+          description: Unauthorized, invalid credentials
+        '400':
+          description: Bad Request, missing or invalid parameters
