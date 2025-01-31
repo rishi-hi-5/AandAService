@@ -1,0 +1,229 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.4.2</version>
+    <relativePath /> <!-- lookup parent from repository -->
+  </parent>
+  <groupId>com.reftech.backend.ana</groupId>
+  <artifactId>AandAService</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>AandAService</name>
+  <description>Authentication and authorization service</description>
+
+  <properties>
+    <java.version>17</java.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+    </dependency>
+    <!--		<dependency>-->
+    <!--			<groupId>org.springframework.boot</groupId>-->
+    <!--			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>-->
+    <!--		</dependency>-->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>r2dbc-postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.24</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Spring Boot Starter Validation -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <!-- JSON Processing -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <!-- MapStruct for DTO Mapping -->
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>1.5.5.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct-processor</artifactId>
+      <version>1.5.5.Final</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+      <version>2.5.0</version>
+    </dependency>
+    <!-- Servlet API Dependency -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>5.0.0</version> <!-- Ensure this matches your Spring Boot version -->
+      <scope>provided</scope> <!-- Mark as provided for server environments -->
+    </dependency>
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    <!-- Hibernate Validator for Jakarta -->
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <version>7.0.1.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>0.2.6</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>
+                run
+              </goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete
+                        dir="${project.build.directory}/generated-sources/openapi/src/test"></delete>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.24</version>
+            </path>
+            <path>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct-processor</artifactId>
+              <version>1.5.5.Final</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </exclude>
+
+          </excludes>
+          <mainClass>com.reftech.backend.anaservice.AandABackendApplication</mainClass>
+
+        </configuration>
+      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.openapitools</groupId>-->
+<!--        <artifactId>openapi-generator-maven-plugin</artifactId>-->
+<!--        <version>6.6.0</version> &lt;!&ndash; Use the latest version &ndash;&gt;-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <id>generate-spring-code</id>-->
+<!--            <goals>-->
+<!--              <goal>generate</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <inputSpec>${project.basedir}/src/main/resources/api-spec.yaml</inputSpec>-->
+<!--              <generatorName>spring</generatorName>-->
+<!--              <output>${project.build.directory}/generated-sources/openapi</output>-->
+<!--              <packageName>com.reftech.backend.anaservice.api</packageName>-->
+<!--              <apiPackage>com.reftech.backend.anaservice.api</apiPackage>-->
+<!--              <modelPackage>com.reftech.backend.anaservice.api</modelPackage>-->
+<!--              <generatorName>spring</generatorName>-->
+<!--              <generateApiTests>false</generateApiTests>-->
+<!--              <generateModelTests>false</generateModelTests>-->
+<!--              <addTestCompileSourceRoot>false</addTestCompileSourceRoot>-->
+<!--              <configOptions>-->
+<!--                <openApiNullable>false</openApiNullable>-->
+<!--                <delegatePattern>true</delegatePattern> &lt;!&ndash; Delegate pattern &ndash;&gt;-->
+<!--                <reactive>true</reactive> &lt;!&ndash; Ensure this is set to true &ndash;&gt;-->
+<!--                <interfaceOnly>false</interfaceOnly> &lt;!&ndash; Generate only interfaces &ndash;&gt;-->
+<!--                <useTags>true</useTags>          &lt;!&ndash; Use tags for API grouping &ndash;&gt;-->
+<!--                <useJakartaEe>true</useJakartaEe>-->
+<!--              </configOptions>-->
+
+<!--              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged> &lt;!&ndash; Skip if spec-->
+<!--							hasn't changed &ndash;&gt;-->
+<!--              <additionalProperties>-->
+<!--                <java8>true</java8> &lt;!&ndash; Ensure Java 8 or higher compatibility &ndash;&gt;-->
+<!--                <jakarta-validation>true</jakarta-validation>-->
+<!--                <reactive>true</reactive> &lt;!&ndash; Ensure this is set to true &ndash;&gt;-->
+
+<!--                <jakarta>true</jakarta>  &lt;!&ndash; Convert to Jakarta (Spring Boot 3.x and-->
+<!--								above) &ndash;&gt;-->
+<!--              </additionalProperties>-->
+<!--            </configuration>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
+    </plugins>
+  </build>
+
+
+</project>
