@@ -1,14 +1,12 @@
 package com.reftech.backend.anaservice.service;
 
-import com.reftech.backend.anaservice.api.LoginUser200Response;
-import com.reftech.backend.anaservice.api.LoginUserRequest;
-import com.reftech.backend.anaservice.api.RegisterUserRequest;
+import com.reftech.backend.anaservice.api.*;
+import com.reftech.backend.anaservice.manager.JwtReactiveAuthenticationManager;
 import com.reftech.backend.anaservice.model.User;
 import com.reftech.backend.anaservice.repository.AnAUserDetailsService;
 import com.reftech.backend.anaservice.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,13 +17,16 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Service
 @Slf4j
 public class AuthService {
     @Autowired
-    private ReactiveAuthenticationManager authenticationManager;
+    private JwtReactiveAuthenticationManager authenticationManager;
 
     @Autowired
     private AnAUserDetailsService userDetailsService;
@@ -45,6 +46,12 @@ public class AuthService {
     @Autowired
     private TokenBlackListService tokenBlackListService;
 
+    public static final Predicate<List<Object>> checkAllInvalidFlags = flags->
+            flags
+                    .stream()
+                    .map(Boolean.class::cast)
+                    .reduce(Boolean.TRUE, (a,b)-> a && b);
+
     public Mono<LoginUser200Response> login(Mono<LoginUserRequest> loginUserRequestMono) {
         Mono<UserDetails> userDetails = loginUserRequestMono
                 .flatMap(checkRateLimit())
@@ -57,10 +64,55 @@ public class AuthService {
 
     public Mono<Void> register(Mono<RegisterUserRequest> registerUserRequestMono) {
         return registerUserRequestMono
-                .flatMap(registerUserRequest -> userRepository.existsByName(registerUserRequest.getUsername())
+                .flatMap(registerUserRequest -> userRepository.existsByUsername(registerUserRequest.getUsername())
                         .flatMap(checkIfUserNameAlreadyExists(registerUserRequest))
                         .flatMap(checkIfUserEmailAlreadyExists(registerUserRequest))
                         .then());
+    }
+
+    public Mono<RefreshToken200Response> refreshToken(Mono<RefreshTokenRequest> refreshTokenRequestMono) {
+        return refreshTokenRequestMono
+                .flatMap(refreshTokenRequest -> {
+                    String userName = refreshTokenRequest.getUsername();
+                    String refreshToken = refreshTokenRequest.getRefreshToken();
+
+                    return Mono.zip(tokenBlackListService.isBlackListed(refreshToken), tokenService.isExpired(refreshToken))
+                            .flatMap(createNewTokenIfRefreshTokenIsNotInvalid(userName));
+                });
+    }
+
+    public Mono<GetUserDetails200Response> getUserDetails(String userName) {
+        return userRepository
+                .findByUsername(userName)
+                .flatMap(userData -> Optional.ofNullable(userData)
+                        .map(user->{
+                            GetUserDetails200Response userResponse = new GetUserDetails200Response();
+                            userResponse.setId(user.getId().toString());
+                            userResponse.setUsername(user.getUsername());
+                            userResponse.setEmail(user.getEmail());
+                            userResponse.setRole(user.getRole());
+                            return Mono.just(userResponse);
+                        })
+                        .orElse(Mono.error(new RuntimeException("User not found"))));
+    }
+
+    private Function<Tuple2<Boolean, Boolean>, Mono<? extends RefreshToken200Response>> createNewTokenIfRefreshTokenIsNotInvalid(String userName) {
+        return invalidFlags -> {
+            if (checkAllInvalidFlags.test(invalidFlags.toList())) {
+                return Mono.error(new RuntimeException("Token is invalid or expired"));
+            }
+            return Mono.zip(tokenService.generateAccessToken(userName),tokenService.generateRefreshToken(userName))
+                        .flatMap(createTokens());
+        };
+    }
+
+    private static Function<Tuple2<String, String>, Mono<? extends RefreshToken200Response>> createTokens() {
+        return tokens -> {
+            RefreshToken200Response refreshToken200Response = new RefreshToken200Response();
+            refreshToken200Response.setAccessToken(tokens.getT1());
+            refreshToken200Response.setRefreshToken(tokens.getT2());
+            return Mono.just(refreshToken200Response);
+        };
     }
 
     public Mono<Void> logout(String authorization, String username) {
@@ -154,6 +206,4 @@ public class AuthService {
             return userRepository.existsByEmail(registerUserRequest.getEmail());
         };
     }
-
-
 }

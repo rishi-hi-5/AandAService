@@ -61,6 +61,21 @@ public class TokenService {
         });
     }
 
+    public String extractUsername(String token) {
+        try {
+            Claims claims = Jwts
+                    .parser()
+                    .verifyWith(secret)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.getSubject();
+        } catch (Exception e) {
+            log.warn("Exception occurred while extracting username",e);
+            throw e;
+        }
+    }
+
     public Mono<String> extractToken(String authorization) {
         String token;
         if (authorization != null && authorization.startsWith("Bearer ")) {
@@ -79,4 +94,27 @@ public class TokenService {
         return new Date();
     }
 
+    public Mono<Boolean> isNotValid(String token) {
+        return validateToken(token)
+                .map(valid -> !valid);
+    }
+
+    public Mono<Boolean> validateToken(String token) {
+        try{
+            Claims claims = Jwts
+                    .parser()
+                    .verifyWith(secret)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            if (claims.getExpiration().before(currentDate())) {
+                return Mono.just(Boolean.FALSE);
+            }
+            return Mono.just(Boolean.TRUE);
+        } catch (Exception e) {
+            log.warn("Exception occured while validating token",e);
+            throw e;
+        }
+    }
 }

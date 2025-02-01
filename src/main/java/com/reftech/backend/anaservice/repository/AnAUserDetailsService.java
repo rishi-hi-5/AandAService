@@ -12,7 +12,7 @@ public class AnAUserDetailsService implements ReactiveUserDetailsService {
     private UserRepository userRepository;
     @Override
     public Mono<UserDetails> findByUsername(String username) {
-        return userRepository.findByName(username)
+        return userRepository.findByUsername(username)
                 .map(user -> org.springframework.security.core.userdetails.User
                         .withUsername(user.getUsername())
                         .password(user.getPassword())

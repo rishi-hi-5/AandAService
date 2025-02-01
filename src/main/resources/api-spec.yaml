@@ -126,7 +126,7 @@ paths:
       tags:
         - auth
       summary: Refresh authentication token
-      description: Refreshes the user's authentication token using a valid refresh token.
+      description: Refreshes the user's authentication token using a valid refresh token and username.
       operationId: refreshToken
       requestBody:
         required: true
@@ -135,10 +135,14 @@ paths:
             schema:
               type: object
               properties:
+                username:
+                  type: string
+                  description: The username of the user requesting a new access token.
                 refreshToken:
                   type: string
                   description: The refresh token issued during login.
               required:
+                - username
                 - refreshToken
       responses:
         '200':
@@ -151,3 +155,53 @@ paths:
                   accessToken:
                     type: string
                     description: The new access token.
+                  refreshToken:
+                    type: string
+                    description: The new refresh token.
+        '400':
+          description: Bad Request, missing or invalid parameters
+        '401':
+          description: Unauthorized, invalid or expired refresh token
+        '403':
+          description: Forbidden, token is blacklisted
+
+  /auth/user/{id}:
+    get:
+      tags:
+        - auth
+      summary: Get user details
+      description: Retrieves details of a user by their ID.
+      operationId: getUserDetails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the user.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user's ID
+                  username:
+                    type: string
+                    description: The user's username
+                  email:
+                    type: string
+                    description: The user's email
+                  role:
+                    type: string
+                    description: The user's role (e.g., admin, user)
+        '404':
+          description: User not found
+        '401':
+          description: Unauthorized, invalid token or not authenticated
+      security:
+        - bearerAuth: [ ]  # indicates that this endpoint requires JWT authentication
