@@ -25,8 +25,13 @@ public class RateLimitingService {
                 .flatMap(performRateLimitCheck(username));
     }
 
-    public Mono<Void> resetRetryCount(String username) {
-        return null;
+    public Mono<Void> incrementFailedLoginCount(String username) {
+        return redisService.get(username)
+                .flatMap(counter -> redisService.save(username, incrementValue(counter), Duration.ofMinutes(EXPIRY_DURATION)))
+                .then();
+    }
+    public Mono<Boolean> resetRetryCount(String username) {
+        return redisService.delete(username);
     }
     private Function<String, Mono<? extends Boolean>> performRateLimitCheck(String username) {
         return value -> Optional.ofNullable(value)
@@ -45,7 +50,4 @@ public class RateLimitingService {
                         .thenReturn(IS_RATE_LIMIT_EXCEEDED.test(counter));
     }
 
-    public Mono<Void> incrementFailedLoginCount(String username) {
-        return null;
-    }
 }

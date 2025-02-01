@@ -1,8 +1,10 @@
 package com.reftech.backend.anaservice.service;
 
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,6 +16,8 @@ import java.util.Date;
 import static com.reftech.backend.anaservice.model.Constants.REFRESH_TOKEN_EXPIRATION;
 import static com.reftech.backend.anaservice.model.Constants.TOKEN_EXPIRATION;
 
+
+@Slf4j
 @Service
 public class TokenService {
     private final SecretKey secret;
@@ -39,6 +43,34 @@ public class TokenService {
                 .signWith(secret)
                 .compact());
     }
+
+    public Mono<Boolean> isExpired(String token) {
+        return Mono.fromCallable(()->{
+           try{
+                Claims claims = Jwts
+                        .parser()
+                        .verifyWith(secret)
+                        .build()
+                        .parseSignedClaims(token)
+                        .getPayload();
+                log.debug("Token is valid with claims [{}]",claims);
+           } catch (Exception e) {
+                log.warn("Token is invalid",e);
+           }
+              return false;
+        });
+    }
+
+    public Mono<String> extractToken(String authorization) {
+        String token;
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            token = authorization.substring(7);
+        } else {
+            return Mono.error(new RuntimeException("Invalid token"));
+        }
+        return Mono.just(token);
+    }
+
     private static Date expireAt(Long expirationTime) {
         return new Date(System.currentTimeMillis() + expirationTime);
     }
@@ -46,4 +78,5 @@ public class TokenService {
     private static Date currentDate() {
         return new Date();
     }
+
 }

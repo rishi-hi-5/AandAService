@@ -53,3 +53,101 @@ paths:
           description: Unauthorized, invalid credentials
         '400':
           description: Bad Request, missing or invalid parameters
+
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register a new user
+      description: Registers a new user by accepting necessary details and saving them.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The desired username.
+                password:
+                  type: string
+                  description: The desired password.
+                email:
+                  type: string
+                  description: The user's email address.
+              required:
+                - username
+                - password
+                - email
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Bad Request, invalid or missing parameters
+        '409':
+          description: Conflict, username or email already in use
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: User logout
+      description: Logs out the current user by invalidating the JWT token (blacklisting it) and clearing the session. Requires the username and JWT token.
+      operationId: logoutUser
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          description: JWT token used for authentication.
+          schema:
+            type: string
+            example: "Bearer <your_token_here>"
+        - in: query
+          name: username
+          required: true
+          description: The username of the user who is logging out.
+          schema:
+            type: string
+            example: "user123"
+      responses:
+        '200':
+          description: User successfully logged out
+        '400':
+          description: Bad Request, missing or invalid parameters
+        '401':
+          description: Unauthorized, invalid or missing JWT token
+        '403':
+          description: Forbidden, token is blacklisted or already invalidated
+        '404':
+          description: User not found or incorrect username
+  /auth/refresh-token:
+    post:
+      tags:
+        - auth
+      summary: Refresh authentication token
+      description: Refreshes the user's authentication token using a valid refresh token.
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  description: The refresh token issued during login.
+              required:
+                - refreshToken
+      responses:
+        '200':
+          description: Successful token refresh
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    description: The new access token.
