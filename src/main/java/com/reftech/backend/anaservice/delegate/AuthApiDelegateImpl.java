@@ -14,13 +14,15 @@ public class AuthApiDelegateImpl implements AuthApiDelegate {
     @Autowired
     private AuthService authService;
 
+
     @Override
-    public Mono<ResponseEntity<LoginUser200Response>> loginUser(Mono<LoginUserRequest> loginUserRequest,ServerWebExchange exchange) {
-        return authService
+    public Mono<ResponseEntity<LoginUser200Response>> loginUser(Mono<LoginUserRequest> loginUserRequest,
+                                                                 ServerWebExchange exchange) {
+                return authService
                 .login(loginUserRequest)
                 .map(ResponseEntity::ok);
-    }
 
+    }
 
     @Override
     public Mono<ResponseEntity<Void>> registerUser(Mono<RegisterUserRequest> registerUserRequest,

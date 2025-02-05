@@ -24,7 +24,8 @@ public class RedisService {
     public Mono<String> get(String key) {
         return redisReactiveTemplate
                 .opsForValue()
-                .get(key);
+                .get(key)
+                .doOnNext(System.out::println);
     }
 
     public Mono<Boolean> delete(String key) {

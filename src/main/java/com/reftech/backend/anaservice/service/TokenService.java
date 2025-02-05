@@ -45,20 +45,22 @@ public class TokenService {
     }
 
     public Mono<Boolean> isExpired(String token) {
-        return Mono.fromCallable(()->{
-           try{
-                Claims claims = Jwts
-                        .parser()
-                        .verifyWith(secret)
-                        .build()
-                        .parseSignedClaims(token)
-                        .getPayload();
-                log.debug("Token is valid with claims [{}]",claims);
-           } catch (Exception e) {
-                log.warn("Token is invalid",e);
-           }
-              return false;
-        });
+        try{
+            Claims claims = Jwts
+                    .parser()
+                    .verifyWith(secret)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            if (claims.getExpiration().before(currentDate())) {
+                return Mono.just(Boolean.FALSE);
+            }
+            return Mono.just(Boolean.TRUE);
+        } catch (Exception e) {
+            log.warn("Exception occured while validating token",e);
+            return Mono.just(Boolean.FALSE);
+        }
     }
 
     public String extractUsername(String token) {
@@ -77,13 +79,9 @@ public class TokenService {
     }
 
     public Mono<String> extractToken(String authorization) {
-        String token;
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            token = authorization.substring(7);
-        } else {
-            return Mono.error(new RuntimeException("Invalid token"));
-        }
-        return Mono.just(token);
+        return authorization != null && authorization.startsWith("Bearer ")
+                ? Mono.just(authorization.substring(7))
+                : Mono.error(new RuntimeException("invalid token"));
     }
 
     private static Date expireAt(Long expirationTime) {
@@ -92,11 +90,6 @@ public class TokenService {
 
     private static Date currentDate() {
         return new Date();
-    }
-
-    public Mono<Boolean> isNotValid(String token) {
-        return validateToken(token)
-                .map(valid -> !valid);
     }
 
     public Mono<Boolean> validateToken(String token) {
@@ -116,5 +109,24 @@ public class TokenService {
             log.warn("Exception occured while validating token",e);
             throw e;
         }
+    }
+
+    public Mono<Boolean> validateToken(String token,String userName) {
+        try{
+            Claims claims = Jwts
+                    .parser()
+                    .verifyWith(secret)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+           if(claims.getSubject().equals(userName) && claims.getExpiration().after(currentDate())){
+                return Mono.just(Boolean.TRUE);
+            }
+        } catch (Exception e) {
+            log.warn("Exception occured while validating token",e);
+            throw e;
+        }
+        return Mono.just(Boolean.FALSE);
     }
 }

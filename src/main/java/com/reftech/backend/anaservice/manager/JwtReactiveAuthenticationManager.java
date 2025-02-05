@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -18,20 +19,25 @@ public class JwtReactiveAuthenticationManager implements ReactiveAuthenticationM
     @Autowired
     private AnAUserDetailsService userDetailsService;
 
+
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
+        return authenticateUsernameAndPassword((UsernamePasswordAuthenticationToken) authentication);
+    }
 
-        String token = authentication.getCredentials().toString();
+    private Mono<Authentication> authenticateUsernameAndPassword(UsernamePasswordAuthenticationToken authentication) {
 
-        return tokenService.validateToken(token)
-                .flatMap(isValid -> {
-                    if (isValid) {
-                        return userDetailsService
-                                .findByUsername(tokenService.extractUsername(token))
-                                .map(userDetails -> new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+        String username = authentication.getName();
+        String password = authentication.getCredentials().toString();
+
+        return userDetailsService.findByUsername(username)
+                .flatMap(userDetails -> {
+                    if (new BCryptPasswordEncoder().matches(password, userDetails.getPassword())) {
+                        return Mono.just((Authentication) new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
                     } else {
-                        return Mono.empty();
+                        return Mono.error(new RuntimeException("Invalid credentials"));
                     }
-                });
+                })
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
     }
 }

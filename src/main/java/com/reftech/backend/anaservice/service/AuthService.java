@@ -7,6 +7,7 @@ import com.reftech.backend.anaservice.repository.AnAUserDetailsService;
 import com.reftech.backend.anaservice.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ import java.util.function.Predicate;
 @Slf4j
 public class AuthService {
     @Autowired
+    @Lazy
     private JwtReactiveAuthenticationManager authenticationManager;
 
     @Autowired
@@ -53,13 +55,19 @@ public class AuthService {
                     .reduce(Boolean.TRUE, (a,b)-> a && b);
 
     public Mono<LoginUser200Response> login(Mono<LoginUserRequest> loginUserRequestMono) {
-        Mono<UserDetails> userDetails = loginUserRequestMono
+        return loginUserRequestMono
+                .doOnNext(loginUserRequest -> log.info("Login request for user {}", loginUserRequest.getUsername()))
+                .doOnError(throwable -> log.error("Error while processing login request", throwable))
                 .flatMap(checkRateLimit())
-                .flatMap(getUserDetails());
-
-        return Mono.zip(userDetails, loginUserRequestMono)
+                .doOnNext(loginUserRequest -> log.info("Rate limit check passed for user {}", loginUserRequest.getUsername()))
+                .doOnError(throwable -> log.error("Error while checking rate limit", throwable))
                 .flatMap(authenticateUser())
-                .flatMap(mapTokenToResponse());
+                .doOnNext(tokens -> log.info("Token generated for user {} ", tokens.getT1()))
+                .doOnError(throwable -> log.error("Error while authenticating user", throwable))
+                .flatMap(mapTokenToResponse())
+                .doOnNext(loginUser200Response -> log.info("User {} logged in", loginUser200Response.getAccessToken()) )
+                .doOnError(throwable -> log.error("Error while mapping token to response", throwable))
+                .log();
     }
 
     public Mono<Void> register(Mono<RegisterUserRequest> registerUserRequestMono) {
@@ -84,6 +92,7 @@ public class AuthService {
     public Mono<GetUserDetails200Response> getUserDetails(String userName) {
         return userRepository
                 .findByUsername(userName)
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
                 .flatMap(userData -> Optional.ofNullable(userData)
                         .map(user->{
                             GetUserDetails200Response userResponse = new GetUserDetails200Response();
@@ -119,36 +128,35 @@ public class AuthService {
         return tokenService.extractToken(authorization)
                 .flatMap(token->tokenBlackListService
                         .blackList(token)
-                        .then(Mono.fromRunnable(()->{
-                            SecurityContextHolder.clearContext();
-                            log.info("User {} logged out", username);
-                        })));
+                        .flatMap(blackListed -> {
+                            log.info("username {} logged out", username);
+                            return Mono.empty();
+                        }));
     }
 
-    private Function<Tuple2<UserDetails, LoginUserRequest>, Mono<? extends Tuple3<String, String,Boolean>>> authenticateUser() {
+    private Function<LoginUserRequest, Mono<? extends Tuple3<String, String,Boolean>>> authenticateUser() {
         return authenticationDetails -> authenticationManager // this is needed basiclly to be future proof with LDAP
-                .authenticate(new UsernamePasswordAuthenticationToken(authenticationDetails.getT2().getUsername(), bCryptPasswordEncoder.encode(authenticationDetails.getT2().getPassword())))
-                .flatMap(obtainTokensAndResetRateLimit(authenticationDetails));
-    }
-
-    private Function<LoginUserRequest, Mono<? extends UserDetails>> getUserDetails() {
-        return loginUserRequest -> {
-            if (!bCryptPasswordEncoder.matches(loginUserRequest.getPassword(), loginUserRequest.getPassword())) {
-                return Mono.error(new RuntimeException("Invalid username or password"));
-            }
-            return userDetailsService.findByUsername(loginUserRequest.getUsername());
-        };
+                .authenticate(new UsernamePasswordAuthenticationToken(
+                        authenticationDetails.getUsername(),authenticationDetails.getPassword()))
+                .doOnNext(auth-> log.info("Authentication successful for user {}", auth.getName()))
+                .flatMap(obtainTokensAndResetRateLimit())
+                .doOnError(throwable -> log.error("Error while authenticating user", throwable))
+                .log();
     }
 
     private Function<LoginUserRequest, Mono<? extends LoginUserRequest>> checkRateLimit() {
         return loginUserRequest -> rateLimitingService
                 .isRateLimited(loginUserRequest.getUsername())
+                .doOnNext(isRateLimited -> log.info("Rate limit check for user {} is {}", loginUserRequest.getUsername(), isRateLimited))
+                .doOnError(throwable -> log.error("Error while checking rate limit", throwable))
                 .flatMap(isRateLimited -> {
                     if (isRateLimited) {
                         return Mono.error(new RuntimeException("Number of retry for login has exceeded the limit. Please try again later."));
                     }
                     return Mono.just(loginUserRequest);
-                });
+                })
+                .doOnNext(loginUserRequest2 -> log.info("Rate limit check passed for user {}", loginUserRequest2.getUsername()))
+                .doOnError(throwable -> log.error("Error while checking rate limit", throwable)).log();
     }
 
     private Function<Tuple3<String, String,Boolean>, Mono<? extends LoginUser200Response>> mapTokenToResponse() {
@@ -165,17 +173,18 @@ public class AuthService {
         };
     }
 
-    private Function<Authentication, Mono<? extends Tuple3<String, String,Boolean>>> obtainTokensAndResetRateLimit(Tuple2<UserDetails, LoginUserRequest> authenticationDetails) {
+    private Function<Authentication, Mono<? extends Tuple3<String, String,Boolean>>> obtainTokensAndResetRateLimit() {
         return authentication -> {
+            String userName = authentication.getName();
             if (authentication.isAuthenticated()) {
                 return Mono.zip(
-                        tokenService.generateAccessToken(authenticationDetails.getT1().getUsername()),
-                        tokenService.generateRefreshToken(authenticationDetails.getT1().getUsername()),
-                        rateLimitingService.resetRetryCount(authenticationDetails.getT1().getUsername()));
+                        tokenService.generateAccessToken(userName),
+                        tokenService.generateRefreshToken(userName),
+                        rateLimitingService.resetRetryCount(userName));
             }
 
             return rateLimitingService
-                    .incrementFailedLoginCount(authenticationDetails.getT1().getUsername())
+                    .incrementFailedLoginCount(userName)
                     .then(Mono.error(new RuntimeException("Invalid credentials")));
         };
     }
