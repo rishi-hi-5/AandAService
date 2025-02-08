@@ -2,6 +2,8 @@ package com.reftech.backend.anaservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -9,10 +11,13 @@ import java.time.Duration;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class RedisService {
 
-    private final ReactiveRedisTemplate<String, String> redisReactiveTemplate;
+
+
+    @Autowired
+    @Qualifier("reactiveRedisTemplate")
+    private ReactiveRedisTemplate<String, String> redisReactiveTemplate;
 
     /**
      * Saves a key-value pair in Redis with an optional expiration time.

@@ -33,6 +33,7 @@ public class JWTAuthenticationFilter implements WebFilter {
     @Autowired
     private JwtReactiveAuthenticationManager authenticationManager;
     public static final Predicate<String> pathDoesntNeedAuthentication = path ->
+            path.contains("/actuator") ||
             path.contains("/auth/login") ||
             path.contains("/auth/register") ||
             path.contains("/ana-service/v3/api-docs") ||

@@ -131,6 +131,8 @@ tolerations: []
 affinity: {}
 
 env:
-  SPRING_DATASOURCE_URL: "r2dbc:postgresql://tms-service-database:5432/anadb"
+  SPRING_DATASOURCE_URL: "r2dbc:postgresql://ana-service-database:5432/anadb"
   SPRING_DATASOURCE_USERNAME: "postgres"
   SPRING_DATASOURCE_PASSWORD: "root"
+  SPRING_REDIS_HOST: "ana-service-redis"
+  SPRING_REDIS_PORT: "6379"
